@@ -3,6 +3,39 @@ var router = require('express').Router();
 var passport = require('passport');
 var User = mongoose.model('User');
 var auth = require('../auth');
+var multer = require('multer');
+var crypto = require('crypto');
+const GridFsStorage = require("multer-gridfs-storage");
+const storage = new GridFsStorage({
+  url: 'mongodb+srv://test:12qwaszx@cluster0-l90om.mongodb.net/test?retryWrites=true&w=majority',
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(16, (err, buf) => {
+        var token = buf.toString('hex');
+        if (err) {
+          return reject(err)
+        }
+        // const url = file.path;
+        const filename = "http://192.168.43.99:3000/api/load/"+token
+        const name = file.originalname
+        const fileInfo = {
+          // url : url,
+          name:name,
+          filename: filename,
+          bucketName: 'uploads',
+        }
+        resolve(fileInfo)
+      })
+    })
+  },
+});
+
+const upload = multer({ storage });
+
+
+
+
+
 // var verifier = require('google-id-token-verifier');
 // var crypto = require('crypto');
 // const ResetToken = require('../../models/ResetToken')
@@ -15,26 +48,40 @@ router.get('/user', auth.required, function(req, res, next){
   }).catch(next);
 });
 
-router.put('/user', auth.required, function(req, res, next){
+router.patch('/user', upload.any('photo'),auth.required, function(req, res, next){
   User.findById(req.payload.id).then(function(user){
     if(!user){ return res.sendStatus(401); }
-
+    
+    
     // only update fields that were actually passed...
-    if(typeof req.body.user.username !== 'undefined'){
-      user.username = req.body.user.username;
+    if(typeof req.body.username!='undefined' && req.body.username!=''){
+      
+      if(typeof user.name=='undefined'){
+        console.log('No name');
+      user['name'] = req.body.username;
+      }
+      else{
+        console.log('Entered else, name exists');
+        user.name = req.body.username;
+      }
+    
     }
-    if(typeof req.body.user.email !== 'undefined'){
-      user.email = req.body.user.email;
+
+    if(req.files.length!=0){
+      console.log('Image is there')
+
+      if(typeof user.image=='undefined'){
+        console.log('No image defined');
+      user['image'] = req.files[0].filename;
+      }
+      else{
+        console.log('Entered else, image exists');
+        user.image = req.files[0].filename;
+      }
+    
     }
-    if(typeof req.body.user.bio !== 'undefined'){
-      user.bio = req.body.user.bio;
-    }
-    if(typeof req.body.user.image !== 'undefined'){
-      user.image = req.body.user.image;
-    }
-    if(typeof req.body.user.password !== 'undefined'){
-      user.setPassword(req.body.user.password);
-    }
+    // user.image = req.files.map(a => a.filename);
+    
 
     return user.save().then(function(){
       return res.json({user: user.toAuthJSON()});

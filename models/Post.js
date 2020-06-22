@@ -20,25 +20,26 @@ var PostSchema = new mongoose.Schema(
       ref: 'User',
     },
     likes:{ type: Number, default: 0 },
-    comments:{ type: Number, default: 0 },  
+    commentscount:{ type: Number, default: 0 },  
 
     location:
     {
     type: { type: String },
     coordinates: []
-    }
+    },
+
     // likes: [
     //   {
     //     type: mongoose.Schema.Types.ObjectId,
     //     ref: 'Like',
     //   },
     // ],
-    // comments: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Comment',
-    //   },
-    // ],
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Comment',
+      },
+    ],
   },
   {
     timestamps: true,
@@ -63,9 +64,10 @@ PostSchema.methods.toJSONFor = function(user){
     title: this.title,
     media: this.image,
     likes:this.likes,
-    comments:this.comments,
+    comments:this.commentscount,
     time: this.createdAt,
     id:this.author._id,
+    postid:this._id,
     profile: {
       user: this.author.name || this.author.username,
       photo: this.author.image || 'https://static.productionready.io/images/smiley-cyrus.jpg',

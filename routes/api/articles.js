@@ -2,6 +2,7 @@ var router = require('express').Router();
 var mongoose = require('mongoose');
 var Article = mongoose.model('Article');
 var Comment = mongoose.model('Comment');
+var AnonymousComment = mongoose.model('AnonymousComment');
 var Post = mongoose.model('Post');
 var AnonymousPost = mongoose.model('AnonymousPost');
 var User = mongoose.model('User');
@@ -9,6 +10,7 @@ var auth = require('../auth');
 var multer = require('multer');
 var crypto = require('crypto');
 const GridFsStorage = require("multer-gridfs-storage");
+const { post } = require('request');
 const storage = new GridFsStorage({
   url: 'mongodb+srv://test:12qwaszx@cluster0-l90om.mongodb.net/test?retryWrites=true&w=majority',
   file: (req, file) => {
@@ -38,27 +40,27 @@ const upload = multer({ storage });
 
 
 // Preload article objects on routes with ':article'
-router.param('article', function(req, res, next, slug) {
-  Article.findOne({ slug: slug})
-    .populate('author')
-    .then(function (article) {
-      if (!article) { return res.sendStatus(404); }
+// router.param('article', function(req, res, next, slug) {
+//   Article.findOne({ slug: slug})
+//     .populate('author')
+//     .then(function (article) {
+//       if (!article) { return res.sendStatus(404); }
 
-      req.article = article;
+//       req.article = article;
 
-      return next();
-    }).catch(next);
-});
+//       return next();
+//     }).catch(next);
+// });
 
-router.param('comment', function(req, res, next, id) {
-  Comment.findById(id).then(function(comment){
-    if(!comment) { return res.sendStatus(404); }
+// router.param('comment', function(req, res, next, id) {
+//   Comment.findById(id).then(function(comment){
+//     if(!comment) { return res.sendStatus(404); }
 
-    req.comment = comment;
+//     req.comment = comment;
 
-    return next();
-  }).catch(next);
-});
+//     return next();
+//   }).catch(next);
+// });
 
 router.get('/', auth.optional, function(req, res, next) {
   var query = {};
@@ -334,143 +336,271 @@ router.post('/addanonymouspost', upload.any('image'), auth.required,function(req
 
 
 // return a article
-router.get('/:article',auth.optional, function(req, res, next) {
-  Promise.all([
-    req.payload ? User.findById(req.payload.id) : null,
-    req.article.populate('author').execPopulate()
-  ]).then(function(results){
-    var user = results[0];
+// router.get('/:article',auth.optional, function(req, res, next) {
+//   Promise.all([
+//     req.payload ? User.findById(req.payload.id) : null,
+//     req.article.populate('author').execPopulate()
+//   ]).then(function(results){
+//     var user = results[0];
 
-    return res.json({article: req.post.toJSONFor(user)});
-  }).catch(next);
-});
+//     return res.json({article: req.post.toJSONFor(user)});
+//   }).catch(next);
+// });
 
-// update article
-router.put('/:article', auth.required, function(req, res, next) {
-  User.findById(req.payload.id).then(function(user){
-    if(req.article.author._id.toString() === req.payload.id.toString()){
-      if(typeof req.body.article.title !== 'undefined'){
-        req.article.title = req.body.article.title;
-      }
+// // update article
+// router.put('/:article', auth.required, function(req, res, next) {
+//   User.findById(req.payload.id).then(function(user){
+//     if(req.article.author._id.toString() === req.payload.id.toString()){
+//       if(typeof req.body.article.title !== 'undefined'){
+//         req.article.title = req.body.article.title;
+//       }
 
-      if(typeof req.body.article.description !== 'undefined'){
-        req.article.description = req.body.article.description;
-      }
+//       if(typeof req.body.article.description !== 'undefined'){
+//         req.article.description = req.body.article.description;
+//       }
 
-      if(typeof req.body.article.body !== 'undefined'){
-        req.article.body = req.body.article.body;
-      }
+//       if(typeof req.body.article.body !== 'undefined'){
+//         req.article.body = req.body.article.body;
+//       }
 
-      if(typeof req.body.article.tagList !== 'undefined'){
-        req.article.tagList = req.body.article.tagList
-      }
+//       if(typeof req.body.article.tagList !== 'undefined'){
+//         req.article.tagList = req.body.article.tagList
+//       }
 
-      req.article.save().then(function(article){
-        return res.json({article: article.toJSONFor(user)});
-      }).catch(next);
-    } else {
-      return res.sendStatus(403);
-    }
-  });
-});
+//       req.article.save().then(function(article){
+//         return res.json({article: article.toJSONFor(user)});
+//       }).catch(next);
+//     } else {
+//       return res.sendStatus(403);
+//     }
+//   });
+// });
 
-// delete article
-router.delete('/:article', auth.required, function(req, res, next) {
-  User.findById(req.payload.id).then(function(user){
-    if (!user) { return res.sendStatus(401); }
+// // delete article
+// router.delete('/:article', auth.required, function(req, res, next) {
+//   User.findById(req.payload.id).then(function(user){
+//     if (!user) { return res.sendStatus(401); }
 
-    if(req.article.author._id.toString() === req.payload.id.toString()){
-      return req.article.remove().then(function(){
-        return res.sendStatus(204);
-      });
-    } else {
-      return res.sendStatus(403);
-    }
-  }).catch(next);
-});
+//     if(req.article.author._id.toString() === req.payload.id.toString()){
+//       return req.article.remove().then(function(){
+//         return res.sendStatus(204);
+//       });
+//     } else {
+//       return res.sendStatus(403);
+//     }
+//   }).catch(next);
+// });
 
 // Favorite an article
-router.post('/:article/favorite', auth.required, function(req, res, next) {
-  var articleId = req.article._id;
-
+router.post('/like', auth.required, function(req, res, next) {
+  var articleId = req.body.id;
+  var type = req.body.type;
+  console.log(type);
   User.findById(req.payload.id).then(function(user){
     if (!user) { return res.sendStatus(401); }
-
-    return user.favorite(articleId).then(function(){
-      return req.article.updateFavoriteCount().then(function(article){
-        return res.json({article: article.toJSONFor(user)});
-      });
+    if(type=="post"){
+    Post.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': 1 } },function(err, response) {
+      if (err) {
+      return res.sendStatus(400);
+     } else {
+      return res.sendStatus(200);
+     }
     });
+  }
+  else if (type=="comment"){
+    Comment.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': 1 } },function(err, response) {
+      if (err) {
+      return res.sendStatus(400);
+     } else {
+      return res.sendStatus(200);
+     }
+    });
+  }
+  else {
+    AnonymousPost.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': 1 } },function(err, response) {
+      if (err) {
+      return res.sendStatus(400);
+     } else {
+      return res.sendStatus(200);
+     }
+    });
+  }
+
+    // return user.favorite(articleId).then(function(){
+    //   return req.article.updateFavoriteCount().then(function(article){
+    //     return res.json({article: article.toJSONFor(user)});
+    //   });
+    // });
   }).catch(next);
 });
 
 // Unfavorite an article
-router.delete('/:article/favorite', auth.required, function(req, res, next) {
-  var articleId = req.article._id;
-
-  User.findById(req.payload.id).then(function (user){
+router.post('/dislike', auth.required, function(req, res, next) {
+  var articleId = req.body.id;
+  var type = req.body.type;
+  console.log(type);
+  User.findById(req.payload.id).then(function(user){
     if (!user) { return res.sendStatus(401); }
 
-    return user.unfavorite(articleId).then(function(){
-      return req.article.updateFavoriteCount().then(function(article){
-        return res.json({article: article.toJSONFor(user)});
+    if(type=="post"){
+      Post.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': -1 } },function(err, response) {
+        if (err) {
+        return res.sendStatus(400);
+       } else {
+        return res.sendStatus(200);
+       }
       });
-    });
+    }
+    else if (type=="comment"){
+      Comment.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': -1 } },function(err, response) {
+        if (err) {
+        return res.sendStatus(400);
+       } else {
+        return res.sendStatus(200);
+       }
+      });
+    }
+    else{
+      AnonymousPost.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': -1 } },function(err, response) {
+        if (err) {
+        return res.sendStatus(400);
+       } else {
+        return res.sendStatus(200);
+       }
+      });
+    }
+
+    // return user.favorite(articleId).then(function(){
+    //   return req.article.updateFavoriteCount().then(function(article){
+    //     return res.json({article: article.toJSONFor(user)});
+    //   });
+    // });
   }).catch(next);
 });
 
+
+
+
+
+
+
+
+
+
+
 // return an article's comments
-router.get('/:article/comments', auth.optional, function(req, res, next){
+router.get('/comments', auth.optional, function(req, res, next){
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(function(user){
-    return req.article.populate({
-      path: 'comments',
-      populate: {
-        path: 'author'
-      },
-      options: {
-        sort: {
-          createdAt: 'desc'
-        }
+    console.log(req.query);
+
+    if (req.query.type=="post"){
+    Post.findById({ _id : req.query.id }, function(err, foundpost) {
+      if(err){
+        console.log(err);
       }
-    }).execPopulate().then(function(article) {
-      return res.json({comments: req.article.comments.map(function(comment){
-        return comment.toJSONFor(user);
-      })});
+      return foundpost.populate({
+        path: 'comments',
+        populate: {
+          path: 'author'
+        },
+        options: {
+          sort: {
+            createdAt: 'desc'
+          }
+        }
+      }).execPopulate().then(function(foundpost) {
+        return res.json({comments: foundpost.comments.map(function(comment){
+          return comment.toJSONFor(user);
+        })});
+      });
+
     });
+  }
+  else{
+    AnonymousPost.findById({ _id : req.query.id }, function(err, foundpost) {
+      if(err){
+        console.log(err);
+      }
+      return foundpost.populate({
+        path: 'comments',
+        populate: {
+          path: 'author'
+        },
+        options: {
+          sort: {
+            createdAt: 'desc'
+          }
+        }
+      }).execPopulate().then(function(foundpost) {
+        return res.json({comments: foundpost.comments.map(function(comment){
+          return comment.toJSONFor(user);
+        })});
+      });
+
+    });
+  }
+
+    
   }).catch(next);
 });
 
 // create a new comment
-router.post('/:article/comments', auth.required, function(req, res, next) {
+router.post('/addcomment', auth.required, function(req, res, next) {
   User.findById(req.payload.id).then(function(user){
     if(!user){ return res.sendStatus(401); }
+    if (req.body.type=="post"){
+    Post.findById({ _id : req.body.id }, function(err, foundpost) {
+      if(err){
+        console.log(err);
+      }
+      var comment = new Comment();
+      comment.body = req.body.comment;
+      comment.author = user;
+      comment.post = foundpost;
 
-    var comment = new Comment(req.body.comment);
-    comment.article = req.article;
-    comment.author = user;
-
-    return comment.save().then(function(){
-      req.article.comments.push(comment);
-
-      return req.article.save().then(function(article) {
-        res.json({comment: comment.toJSONFor(user)});
+      return comment.save().then(function(){
+        comment.post.comments.push(comment);
+        comment.post.commentscount++;
+        return comment.post.save().then(function(post) {
+          res.sendStatus(200);
+        });
       });
     });
+  }
+  else{
+    AnonymousPost.findById({ _id : req.body.id }, function(err, foundpost) {
+      if(err){
+        console.log(err);
+      }
+      var comment = new AnonymousComment();
+      comment.body = req.body.comment;
+      comment.author = user;
+      comment.post = foundpost;
+
+      return comment.save().then(function(){
+        comment.post.comments.push(comment);
+        comment.post.commentscount++;
+        return comment.post.save().then(function(post) {
+          res.sendStatus(200);
+        });
+      });
+    });
+  }
   }).catch(next);
 });
 
-router.delete('/:article/comments/:comment', auth.required, function(req, res, next) {
-  if(req.comment.author.toString() === req.payload.id.toString()){
-    req.article.comments.remove(req.comment._id);
-    req.article.save()
-      .then(Comment.find({_id: req.comment._id}).remove().exec())
-      .then(function(){
-        res.sendStatus(204);
-      });
-  } else {
-    res.sendStatus(403);
-  }
-});
+// router.delete('/:article/comments/:comment', auth.required, function(req, res, next) {
+//   if(req.comment.author.toString() === req.payload.id.toString()){
+//     req.article.comments.remove(req.comment._id);
+//     req.article.save()
+//       .then(Comment.find({_id: req.comment._id}).remove().exec())
+//       .then(function(){
+//         res.sendStatus(204);
+//       });
+//   } else {
+//     res.sendStatus(403);
+//   }
+// });
 
 
 
