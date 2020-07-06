@@ -2,6 +2,9 @@ var mongoose = require('mongoose');
 var router = require('express').Router();
 var passport = require('passport');
 var User = mongoose.model('User');
+var Pack = mongoose.model('Pack');
+var Party = mongoose.model('Party');
+var Notification = mongoose.model('Notification');
 var auth = require('../auth');
 var multer = require('multer');
 var crypto = require('crypto');
@@ -277,6 +280,403 @@ router.post('/users/register', function(req, res, next){
    
 // });
 
+
+
+
+
+router.get('/users/search', auth.required, function(req, res, next) {
+  
+
+  console.log(req.query.name);
+  // var query = req.query.name;
+  var regexp = new RegExp("^"+ req.query.name,"i");
+  User.findById(req.payload.id).then(function(user){
+    if (!user) { 
+      return res.sendStatus(401); 
+    }
+    Promise.all([
+      User.find(
+        // $or: [
+        //   { name: regexp },
+        //   { username: regexp},
+        // ]
+        {name:regexp}
+        )
+        .limit(10)
+        .populate()
+        .exec(),
+    ]).then(function(results){
+      var feeds = results[0];
+      // var articlesCount = results[1];
+      console.log(results);
+      return res.json({
+        // profiles:feeds
+        profiles: feeds.map(function(user){
+          return user.toProfileJSONFor(user);
+        })
+      })
+    });
+    }).catch(next);
+  });
+
+  router.get('/users/checkpack', auth.required, function(req, res, next) {
+  
+    User.findById(req.payload.id).then(function(user){
+      if (!user) { 
+        return res.sendStatus(401); 
+      }
+      if(typeof user.pack=='undefined'){
+        console.log("Send 400")
+        return res.sendStatus(400);
+      }
+      else{
+        return res.sendStatus(200);
+      }
+
+      }).catch(next);
+    });
+    router.get('/users/checkparty', auth.required, function(req, res, next) {
+  
+      User.findById(req.payload.id).then(function(user){
+        if (!user) { 
+          return res.sendStatus(401); 
+        }
+        if(typeof user.party=='undefined'){
+          return res.sendStatus(400);
+        }
+        else{
+          return res.sendStatus(200);
+        }
+  
+        }).catch(next);
+      });
+
+    router.post('/users/createpack', upload.any('photo'),auth.required, function(req, res, next) {
+  
+      User.findById(req.payload.id).then(function(user){
+        if (!user) { 
+          return res.sendStatus(401);
+        }
+        var pack = new Pack();
+        pack.name = req.body.name;
+        pack.dp = req.files[0].filename;
+        pack.alpha = user;
+        var member = {
+          name:user.name||user.username,
+          photo:user.image,
+          user:user,
+          designation:"Alpha"
+        }
+        pack.members.push(member);
+        console.log(pack);
+        return pack.save().then(function(){
+          user.pack = pack;
+          return user.save().then(function() {
+            res.sendStatus(200);
+          });
+        });
+
+        }).catch(next);
+      });
+
+      router.post('/users/createparty', upload.any('photo'),auth.required, function(req, res, next) {
+  
+        User.findById(req.payload.id).then(function(user){
+          if (!user) { 
+            return res.sendStatus(401);
+          }
+          var party = new Party();
+          party.name = req.body.name;
+          party.dp = req.files[0].filename;
+          party.alpha = user;
+          var member = {
+            name:user.name||user.username,
+            photo:user.image,
+            user:user,
+            designation:"President"
+          }
+          party.members.push(member);
+          console.log(party);
+          return party.save().then(function(){
+            user.party = party;
+            return user.save().then(function() {
+              res.sendStatus(200);
+            });
+          });
+  
+          }).catch(next);
+        });
+
+      router.get('/users/getpack', auth.required, function(req, res, next) {
+  
+        User.findById(req.payload.id).then(function(user){
+          if (!user) { 
+            return res.sendStatus(401); 
+          }
+          
+            return user.populate({
+              path: 'pack',
+              populate: {
+                // path: 'members',
+                
+                path: 'alpha'
+              },
+              
+              // options: {
+              //   sort: {
+              //     influence: 'desc'
+              //   }
+              // }
+            }).execPopulate().then(function(user) {
+                console.log(user.pack.members[0]);
+                res.json({
+                  name:user.pack.name,
+                  dp:user.pack.dp,
+                  alpha:user.pack.alpha.name || user.pack.alpha.username,
+                  influence:user.pack.influence,
+                  members:user.pack.members,
+                  pack_id:user.pack.id,
+                  membercount:user.pack.members.length
+                });
+              });
+          
+    
+          }).catch(next);
+        });
+
+        router.get('/users/getparty', auth.required, function(req, res, next) {
+  
+          User.findById(req.payload.id).then(function(user){
+            if (!user) { 
+              return res.sendStatus(401); 
+            }
+            
+              return user.populate({
+                path: 'party',
+                populate: {
+                  // path: 'members',
+                  
+                  path: 'alpha'
+                },
+                
+                // options: {
+                //   sort: {
+                //     influence: 'desc'
+                //   }
+                // }
+              }).execPopulate().then(function(user) {
+                  console.log(user.party.members[0]);
+                  res.json({
+                    name:user.party.name,
+                    dp:user.party.dp,
+                    alpha:user.party.alpha.name || user.party.alpha.username,
+                    influence:user.party.influence,
+                    members:user.party.members,
+                    pack_id:user.party.id,
+                    membercount:user.party.membercount
+                  });
+                });
+            
+      
+            }).catch(next);
+          });
+
+        router.post('/users/send', auth.required, function(req, res, next) {
+  
+          User.findById(req.body.user_id).then(function(user){
+            if (!user) { 
+              return res.sendStatus(401);
+            }
+            console.log(req.body);
+            var type = req.body.type;
+            var notification = new Notification();
+            notification.type = type;
+            notification.user = user;
+            notification.sender = req.payload.id;
+            if(type=="pack"){
+              notification.pack = mongoose.Types.ObjectId(req.body.id);
+            }
+            else{
+                notification.party = mongoose.Types.ObjectId(req.body.id);
+            }
+            
+            
+            return notification.save().then(function(){
+              user.notifications.push(notification);
+              return user.save().then(function() {
+                res.sendStatus(200);
+              });
+            });
+    
+            }).catch(next);
+          });
+
+          router.post('/users/accept', auth.required, function(req, res, next) {
+            console.log(req.body);
+            User.findById(req.payload.id).then(function(user){
+              if (!user) { 
+                return res.sendStatus(401);
+              }
+              if(req.body.type=="pack"){
+              if(typeof user.pack!='undefined'){
+                res.sendStatus(400);
+              }
+              else{
+                
+                Pack.findById(req.body.p_id).then(function(pack){
+                  if(pack.members.length>=12){
+                    return res.sendStatus(300);
+                  }
+                  var member = {
+                    name:user.name||user.username,
+                    photo:user.image,
+                    user:user
+                  }
+                  console.log(member);
+                  user.pack = mongoose.Types.ObjectId(req.body.p_id);
+                  
+                  return user.save().then(function(){
+                    pack.members.push(member);
+                    return pack.save().then(function(pack) {
+                      res.sendStatus(200);
+                    });
+                  });
+                });
+                
+              }
+            }
+            else{
+              if(typeof user.party!='undefined'){
+                res.sendStatus(400);
+              }
+              else{
+                
+                Party.findById(req.body.p_id).then(function(party){
+                  var member = {
+                    name:user.name||user.username,
+                    photo:user.image,
+                    user:user
+                  }
+                  console.log(member);
+                  user.party = mongoose.Types.ObjectId(req.body.p_id);
+                  
+                  return user.save().then(function(){
+                    party.members.push(member);
+                    party.membercount++;
+                    return party.save().then(function(party) {
+                      res.sendStatus(200);
+                    });
+                  });
+                });
+                
+              }
+            }
+              
+              
+              // return notification.save().then(function(){
+              //   user.notifications.push(notification);
+              //   return user.save().then(function() {
+              //     res.sendStatus(200);
+              //   });
+              // });
+      
+              }).catch(next);
+            });
+
+          router.get('/users/getnotification', auth.required, function(req, res, next) {
+  
+            User.findById(req.payload.id).then(function(user){
+              if (!user) { 
+                return res.sendStatus(401); 
+              }
+              
+                return user.populate(
+                  {
+                    path: 'notifications',
+                    populate:  [
+                      { path: 'pack' ,options: { retainNullValues: false }},
+                      { path: 'party', options: { retainNullValues: false }}
+                    ]
+                    
+                    
+                  })
+                  .execPopulate().then(function(user) {
+                    
+                  return res.json({notifications: user.notifications.map(function(notification){
+                    console.log(notification)
+                    if(notification.type=="pack"){
+                      
+                    return notification.toJSONForPack(notification);
+                     
+                  
+                  }
+                    else{
+                      return notification.toJSONForParty(notification);
+                    }
+                  })
+
+                    });
+                  });
+              
+        
+              }).catch(next);
+            });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            router.get('users/getalpharanking',  function(req, res, next) {
+  
+              Promise.all([
+                User.find()
+                  .limit(10)
+                  .populate()
+                  .exec(),
+              ]).then(function(results){
+                var feeds = results[0];
+                // var articlesCount = results[1];
+                console.log(results);
+                return res.json({
+                  // profiles:feeds
+                  profiles: feeds.map(function(user){
+                    return user.toProfileJSONFor(user);
+                  })
+                })
+              });
+              });
+
+              router.get('/users/getpackranking', function(req, res, next) {
+  
+                Promise.all([
+                  User.find()
+                    .limit(10)
+                    .populate()
+                    .exec(),
+                ]).then(function(results){
+                  var feeds = results[0];
+                  // var articlesCount = results[1];
+                  console.log(results);
+                  return res.json({
+                    // profiles:feeds
+                    profiles: feeds.map(function(user){
+                      return user.toProfileJSONFor(user);
+                    })
+                  })
+                });
+                });
 
 
 
