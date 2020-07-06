@@ -9,6 +9,16 @@ var PostSchema = new mongoose.Schema(
   {
     name: String,
     dp:String,
+    members:[{
+      designation: {type: String, default:"Member"},
+      photo:String,
+      name: String,
+      user:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    
+    }],
     influence:{ type: Number, default: 0 },
     alpha: {
         type: mongoose.Schema.Types.ObjectId,

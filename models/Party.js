@@ -9,13 +9,24 @@ var PostSchema = new mongoose.Schema(
   {
     name: String,
     dp:String,
-    influence:{ type: Number, default: 0 },
-    President: {
+    members:[{
+      designation: {type: String, default:"Member"},
+      photo:String,
+      name: String,
+      user:{
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'User'
     },
     
-  },
+    }],
+
+    influence:{ type: Number, default: 0 },
+    membercount:{ type: Number, default: 0 },
+    alpha: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    },
   {
     timestamps: true,
   }

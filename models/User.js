@@ -52,7 +52,12 @@ var UserSchema = new mongoose.Schema({
     type: { type: String },
     coordinates: []
     },
-
+    notifications: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Notification',
+      },
+    ],
 
 
 
@@ -121,17 +126,16 @@ UserSchema.methods.toAuthJSON = function(){
 
 UserSchema.methods.toProfileJSONFor = function(user){
   return {
+    user_id:this.id,
     photo: this.image || '',
     username: this.name || this.username,
     influence:this.influence,
     popularity:this.popularity,
     commitment:this.commitments,
-    party:this.party || {partyname:"Not Joined",
-                          partyimage:""},
-    pack:this.pack || {packname:"Not Joined",
-    packimage:""}
-    
-
+    party:{partyname:(this.party && this.party.name ) || "Not Joined",
+    partyimage : (this.party && this.party.dp )  ||  ""},
+    pack:{packname:(this.pack && this.pack.name ) || "Not Joined",
+    packimage : (this.pack && this.pack.dp )  ||  ""},
     
     // following: user ? user.isFollowing(this._id) : false
   };
@@ -141,6 +145,14 @@ UserSchema.methods.feedprofile = function(user){
   return {
     user: this.name || this.username,
     photo: this.image || 'https://static.productionready.io/images/smiley-cyrus.jpg'
+  
+  };
+};
+UserSchema.methods.searchprofile = function(user){
+  return {
+    user: this.name || this.username,
+    photo: this.image || 'https://static.productionready.io/images/smiley-cyrus.jpg',
+    influence:this.influence
   
   };
 };

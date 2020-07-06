@@ -46,6 +46,8 @@ require('./models/Party');
 require('./models/Pack');
 require('./models/AnonymousPost');
 require('./models/AnonymousComment');
+require('./models/Notification');
+
 
 app.use(require('./routes'));
 

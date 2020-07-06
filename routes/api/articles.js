@@ -403,7 +403,12 @@ router.post('/like', auth.required, function(req, res, next) {
       if (err) {
       return res.sendStatus(400);
      } else {
-      return res.sendStatus(200);
+      User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+        
+        return res.sendStatus(200);
+       
+      });
+      // return res.sendStatus(200);
      }
     });
   }
@@ -412,7 +417,12 @@ router.post('/like', auth.required, function(req, res, next) {
       if (err) {
       return res.sendStatus(400);
      } else {
-      return res.sendStatus(200);
+      User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+        
+        return res.sendStatus(200);
+       
+      });
+      // return res.sendStatus(200);
      }
     });
   }
@@ -421,7 +431,12 @@ router.post('/like', auth.required, function(req, res, next) {
       if (err) {
       return res.sendStatus(400);
      } else {
-      return res.sendStatus(200);
+      User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+        
+        return res.sendStatus(200);
+       
+      });
+      // return res.sendStatus(200);
      }
     });
   }
@@ -447,7 +462,12 @@ router.post('/dislike', auth.required, function(req, res, next) {
         if (err) {
         return res.sendStatus(400);
        } else {
-        return res.sendStatus(200);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': -1 } },function(err, response) {
+        
+          return res.sendStatus(200);
+         
+        });
+        // return res.sendStatus(200);
        }
       });
     }
@@ -456,7 +476,12 @@ router.post('/dislike', auth.required, function(req, res, next) {
         if (err) {
         return res.sendStatus(400);
        } else {
-        return res.sendStatus(200);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': -1 } },function(err, response) {
+        
+          return res.sendStatus(200);
+         
+        });
+        // return res.sendStatus(200);
        }
       });
     }
@@ -465,7 +490,12 @@ router.post('/dislike', auth.required, function(req, res, next) {
         if (err) {
         return res.sendStatus(400);
        } else {
-        return res.sendStatus(200);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': -1 } },function(err, response) {
+        
+          return res.sendStatus(200);
+         
+        });
+        // return res.sendStatus(200);
        }
       });
     }

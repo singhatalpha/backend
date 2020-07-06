@@ -7,10 +7,13 @@ var auth = require('../auth');
 
 router.get('/', auth.required, function(req, res, next){
   
-  User.findById(req.payload.id).then(function(user){
+  User.findById(req.payload.id)
+  .populate('pack')
+  .populate('party')
+  .then(function(user){
     if(!user){ return res.json({error:"error"}); }
 
-    
+    console.log(user);
     return res.json({profile: user.toProfileJSONFor(user)});
   });
   
@@ -19,8 +22,11 @@ router.get('/', auth.required, function(req, res, next){
 
 router.get('/view', auth.optional,function(req, res, next){
   
-    User.findById(req.query.id).then(function(user){
-     
+    User.findById(req.query.id)
+    .populate('pack')
+    .populate('party')
+    .then(function(user){
+      user.popularity++;
       if(!user){ return res.json({profile: user.toProfileJSONFor(false)}); }
 
       return res.json({profile: user.toProfileJSONFor(user)});
