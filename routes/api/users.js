@@ -21,7 +21,7 @@ const storage = new GridFsStorage({
           return reject(err)
         }
         // const url = file.path;
-        const filename = "http://192.168.43.99:3000/api/load/"+token
+        const filename = "http://alphanetwork.herokuapp.com/api/load/"+token
         const name = file.originalname
         const fileInfo = {
           // url : url,
