@@ -642,7 +642,7 @@ router.get('/comments', auth.optional, function(req, res, next){
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(function(user){
     console.log(req.query);
 
-    if (req.query.type=="post"){
+    if (req.query.type=="comment"){
     Post.findById({ _id : req.query.id }, function(err, foundpost) {
       if(err){
         console.log(err);
