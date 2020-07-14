@@ -697,7 +697,7 @@ router.get('/comments', auth.optional, function(req, res, next){
 router.post('/addcomment', auth.required, function(req, res, next) {
   User.findById(req.payload.id).then(function(user){
     if(!user){ return res.sendStatus(401); }
-    if (req.body.type=="post"){
+    if (req.body.type=="comment"){
     Post.findById({ _id : req.body.id }, function(err, foundpost) {
       if(err){
         console.log(err);
