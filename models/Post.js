@@ -21,7 +21,7 @@ var PostSchema = new mongoose.Schema(
     },
     likes:{ type: Number, default: 0 },
     commentscount:{ type: Number, default: 0 },  
-
+    likedby:[{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     location:
     {
     type: { type: String },
@@ -71,6 +71,7 @@ PostSchema.methods.toJSONFor = function(user){
     profile: {
       user: this.author.name || this.author.username,
       photo: this.author.image || 'https://static.productionready.io/images/smiley-cyrus.jpg',
+      position: this.author.position || ''
     }
   };
 };

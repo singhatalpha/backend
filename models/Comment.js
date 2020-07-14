@@ -5,6 +5,7 @@ var CommentSchema = new mongoose.Schema({
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
   likes:{ type: Number, default: 0 },
+  likedby:[{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, {timestamps: true});
 
 // Requires population of author

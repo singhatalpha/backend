@@ -6,6 +6,7 @@ var AnonymousComment = mongoose.model('AnonymousComment');
 var Post = mongoose.model('Post');
 var AnonymousPost = mongoose.model('AnonymousPost');
 var User = mongoose.model('User');
+var Commitment = mongoose.model('Commitment');
 var auth = require('../auth');
 var multer = require('multer');
 var crypto = require('crypto');
@@ -21,7 +22,8 @@ const storage = new GridFsStorage({
           return reject(err)
         }
         // const url = file.path;
-        const filename = "http://192.168.43.99:3000/api/load/"+token
+        // const filename = "http://192.168.43.99:3000/api/load/"+token
+        const filename = "http://192.168.0.107:3000/api/load/"+token
         const name = file.originalname
         const fileInfo = {
           // url : url,
@@ -156,7 +158,7 @@ router.get('/feed',auth.required, function(req, res, next) {
       Post.find({
           location: {
           $near: {
-           $maxDistance: 1000,
+          //  $maxDistance: 90*1000,
            $geometry: {
             type: "Point",
             coordinates: [longitude, latitude]
@@ -258,7 +260,7 @@ router.get('/feed',auth.required, function(req, res, next) {
         AnonymousPost.find({
             location: {
             $near: {
-             $maxDistance: 1000,
+            //  $maxDistance: 1000,
              $geometry: {
               type: "Point",
               coordinates: [longitude, latitude]
@@ -305,7 +307,7 @@ router.post('/addpost', upload.any('image'), auth.required,function(req, res, ne
     console.log(req.files)
 
     return post.save().then(function(){
-      return res.json({post: post.toJSONFor(user)});
+      return res.sendStatus(200);
     });
   }).catch(next);
 });
@@ -328,7 +330,8 @@ router.post('/addanonymouspost', upload.any('image'), auth.required,function(req
     console.log(req.files)
 
     return post.save().then(function(){
-      return res.json({post: post.toJSONFor(user)});
+      return res.sendStatus(200);
+
     });
   }).catch(next);
 });
@@ -399,44 +402,102 @@ router.post('/like', auth.required, function(req, res, next) {
   User.findById(req.payload.id).then(function(user){
     if (!user) { return res.sendStatus(401); }
     if(type=="post"){
-    Post.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': 1 } },function(err, response) {
+      Post.findOne({ _id: articleId } ,function(err, response) {
+        if (err) {
+        return res.sendStatus(400);
+       } else {
+        var exists = response.likedby.some(function (friend) {
+          return friend.equals(user.id);
+      });
+      if(!exists){
+        response.likes++;
+        response.likedby.push(user);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+          
+        });
+        response.save();
+      }
+        return res.sendStatus(200);
+       }
+      });
+  }
+  else if (type=="comment"){
+    Comment.findOne({ _id: articleId } ,function(err, response) {
       if (err) {
       return res.sendStatus(400);
      } else {
+      var exists = response.likedby.some(function (friend) {
+        return friend.equals(user.id);
+    });
+    if(!exists){
+      response.likes++;
+      response.likedby.push(user);
       User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
         
-        return res.sendStatus(200);
-       
       });
-      // return res.sendStatus(200);
+      response.save();
+    }
+      return res.sendStatus(200);
      }
     });
   }
-  else if (type=="comment"){
-    Comment.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': 1 } },function(err, response) {
+  else if (type=="anony"){
+    AnonymousComment.findOne({ _id: articleId } ,function(err, response) {
       if (err) {
       return res.sendStatus(400);
      } else {
+      var exists = response.likedby.some(function (friend) {
+        return friend.equals(user.id);
+    });
+    if(!exists){
+      response.likes++;
+      response.likedby.push(user);
       User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
         
-        return res.sendStatus(200);
-       
       });
-      // return res.sendStatus(200);
+      response.save();
+    }
+      return res.sendStatus(200);
+     }
+    });
+  }
+  else if (type=="commitment"){
+    Commitment.findOne({ _id: articleId },function(err, response) {
+      if (err) {
+      return res.sendStatus(400);
+     } else {
+      var exists = response.likedby.some(function (friend) {
+        return friend.equals(user.id);
+    });
+    if(!exists){
+      response.likes++;
+      response.likedby.push(user);
+      User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+        
+      });
+      response.save();
+    }
+      return res.sendStatus(200);
      }
     });
   }
   else {
-    AnonymousPost.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': 1 } },function(err, response) {
+    AnonymousPost.findOne({ _id: articleId } ,function(err, response) {
       if (err) {
       return res.sendStatus(400);
      } else {
+      var exists = response.likedby.some(function (friend) {
+        return friend.equals(user.id);
+    });
+    if(!exists){
+      response.likes++;
+      response.likedby.push(user);
       User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
         
-        return res.sendStatus(200);
-       
       });
-      // return res.sendStatus(200);
+      response.save();
+    }
+      return res.sendStatus(200);
      }
     });
   }
@@ -458,44 +519,102 @@ router.post('/dislike', auth.required, function(req, res, next) {
     if (!user) { return res.sendStatus(401); }
 
     if(type=="post"){
-      Post.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': -1 } },function(err, response) {
+      Post.findOne({ _id: articleId },function(err, response) {
         if (err) {
         return res.sendStatus(400);
        } else {
+        var exists = response.likedby.some(function (friend) {
+          return friend.equals(user.id);
+      });
+      if(!exists){
+        console.log("entered in if exist")
+        response.likes--;
+        response.likedby.push(user);
         User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': -1 } },function(err, response) {
-        
-          return res.sendStatus(200);
-         
         });
-        // return res.sendStatus(200);
+        response.save();
+      }
+        return res.sendStatus(200);
        }
       });
     }
     else if (type=="comment"){
-      Comment.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': -1 } },function(err, response) {
+      Comment.findOne({ _id: articleId },function(err, response) {
         if (err) {
         return res.sendStatus(400);
        } else {
-        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': -1 } },function(err, response) {
-        
-          return res.sendStatus(200);
-         
+        var exists = response.likedby.some(function (friend) {
+          return friend.equals(user.id);
+      });
+      if(!exists){
+        console.log("entered in if exist")
+        response.likes--;
+        response.likedby.push(user);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
         });
-        // return res.sendStatus(200);
+        response.save();
+      }
+        return res.sendStatus(200);
+       }
+      });
+    }
+    else if (type=="anony"){
+      Comment.findOne({ _id: articleId },function(err, response) {
+        if (err) {
+        return res.sendStatus(400);
+       } else {
+        var exists = response.likedby.some(function (friend) {
+          return friend.equals(user.id);
+      });
+      if(!exists){
+        console.log("entered in if exist")
+        response.likes--;
+        response.likedby.push(user);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+        });
+        response.save();
+      }
+        return res.sendStatus(200);
+       }
+      });
+    }
+    else if (type=="commitment"){
+      Commitment.findOne({ _id: articleId },function(err, response) {
+        if (err) {
+        return res.sendStatus(400);
+       } else {
+        var exists = response.likedby.some(function (friend) {
+          return friend.equals(user.id);
+      });
+      if(!exists){
+        response.likes--;
+        response.likedby.push(user);
+        User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': 1 } },function(err, response) {
+        
+        });
+        response.save();
+      }
+        return res.sendStatus(200);
        }
       });
     }
     else{
-      AnonymousPost.findOneAndUpdate({ _id: articleId }, { $inc: {'likes': -1 } },function(err, response) {
+      AnonymousPost.findOne({ _id: articleId },function(err, response) {
         if (err) {
         return res.sendStatus(400);
        } else {
+        var exists = response.likedby.some(function (friend) {
+          return friend.equals(user.id);
+      });
+      if(!exists){
+        console.log("entered in if exist")
+        response.likes--;
+        response.likedby.push(user);
         User.findOneAndUpdate({ _id: response.author }, { $inc: {'influence': -1 } },function(err, response) {
-        
-          return res.sendStatus(200);
-         
         });
-        // return res.sendStatus(200);
+        response.save();
+      }
+        return res.sendStatus(200);
        }
       });
     }

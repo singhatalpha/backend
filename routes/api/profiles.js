@@ -10,6 +10,7 @@ router.get('/', auth.required, function(req, res, next){
   User.findById(req.payload.id)
   .populate('pack')
   .populate('party')
+  .populate('commitments')
   .then(function(user){
     if(!user){ return res.json({error:"error"}); }
 
@@ -25,8 +26,11 @@ router.get('/view', auth.optional,function(req, res, next){
     User.findById(req.query.id)
     .populate('pack')
     .populate('party')
+    .populate('commitments')
     .then(function(user){
       user.popularity++;
+      console.log(user);
+      user.save();
       if(!user){ return res.json({profile: user.toProfileJSONFor(false)}); }
 
       return res.json({profile: user.toProfileJSONFor(user)});

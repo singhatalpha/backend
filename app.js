@@ -47,7 +47,7 @@ require('./models/Pack');
 require('./models/AnonymousPost');
 require('./models/AnonymousComment');
 require('./models/Notification');
-
+require('./models/Commitment');
 
 app.use(require('./routes'));
 

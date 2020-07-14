@@ -21,7 +21,7 @@ var AnonymousPostSchema = new mongoose.Schema(
     },
     likes:{ type: Number, default: 0 },
     commentscount:{ type: Number, default: 0 },  
-
+    likedby:[{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     location:
     {
     type: { type: String },

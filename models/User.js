@@ -9,6 +9,7 @@ var UserSchema = new mongoose.Schema({
     id: String,
   },
   name:String,
+  position:String,
   username: {type: String, lowercase: true, unique: true,
     //  required: [true, "can't be blank"], match: [/^[a-zA-Z0-9]+$/, 'is invalid'], 
      index: true},
@@ -26,8 +27,10 @@ var UserSchema = new mongoose.Schema({
   post_count:{ type: Number, default: 0 },
   likes:{ type: Number, default: 0 },
 
-  commitments:[
-    String
+  commitments:[{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Commitment',
+  },
   ],
 
   influence:{ type: Number, default: 0 },
@@ -45,6 +48,8 @@ var UserSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Pack',
     },
+    packDesignation:String,
+    partyDesignation:String,
 
 
   location:
@@ -129,9 +134,10 @@ UserSchema.methods.toProfileJSONFor = function(user){
     user_id:this.id,
     photo: this.image || '',
     username: this.name || this.username,
+    position:this.position || '',
     influence:this.influence,
     popularity:this.popularity,
-    commitment:this.commitments,
+    commitment:(this.commitments[0] && this.commitments[0].body ) || "None",
     party:{partyname:(this.party && this.party.name ) || "Not Joined",
     partyimage : (this.party && this.party.dp )  ||  ""},
     pack:{packname:(this.pack && this.pack.name ) || "Not Joined",
@@ -140,6 +146,15 @@ UserSchema.methods.toProfileJSONFor = function(user){
     // following: user ? user.isFollowing(this._id) : false
   };
 };
+// UserSchema.methods.toPackJSONFor = function(user){
+//   return {
+//     name:user.name,
+//     dp:user.dp,
+//     influence:user.influence
+    
+//     // following: user ? user.isFollowing(this._id) : false
+//   };
+// };
 
 UserSchema.methods.feedprofile = function(user){
   return {

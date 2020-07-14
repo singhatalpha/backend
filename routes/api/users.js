@@ -5,10 +5,12 @@ var User = mongoose.model('User');
 var Pack = mongoose.model('Pack');
 var Party = mongoose.model('Party');
 var Notification = mongoose.model('Notification');
+var Commitment = mongoose.model('Commitment');
 var auth = require('../auth');
 var multer = require('multer');
 var crypto = require('crypto');
 const GridFsStorage = require("multer-gridfs-storage");
+const { sort } = require('methods');
 const storage = new GridFsStorage({
   url: 'mongodb+srv://test:12qwaszx@cluster0-l90om.mongodb.net/test?retryWrites=true&w=majority',
   file: (req, file) => {
@@ -361,16 +363,17 @@ router.get('/users/search', auth.required, function(req, res, next) {
         pack.name = req.body.name;
         pack.dp = req.files[0].filename;
         pack.alpha = user;
-        var member = {
-          name:user.name||user.username,
-          photo:user.image,
-          user:user,
-          designation:"Alpha"
-        }
-        pack.members.push(member);
+        // var member = {
+        //   name:user.name||user.username,
+        //   photo:user.image,
+        //   user:user,
+        //   designation:"Alpha"
+        // }
+        pack.members.push(user);
         console.log(pack);
         return pack.save().then(function(){
           user.pack = pack;
+          user.packDesignation = "Alpha";
           return user.save().then(function() {
             res.sendStatus(200);
           });
@@ -389,16 +392,18 @@ router.get('/users/search', auth.required, function(req, res, next) {
           party.name = req.body.name;
           party.dp = req.files[0].filename;
           party.alpha = user;
-          var member = {
-            name:user.name||user.username,
-            photo:user.image,
-            user:user,
-            designation:"President"
-          }
-          party.members.push(member);
+          // var member = {
+          //   name:user.name||user.username,
+          //   photo:user.image,
+          //   user:user,
+          //   designation:"President"
+          // }
+          party.members.push(user);
+          party.membercount++;
           console.log(party);
           return party.save().then(function(){
             user.party = party;
+            user.partyDesignation = "President";
             return user.save().then(function() {
               res.sendStatus(200);
             });
@@ -417,9 +422,7 @@ router.get('/users/search', auth.required, function(req, res, next) {
             return user.populate({
               path: 'pack',
               populate: {
-                // path: 'members',
-                
-                path: 'alpha'
+                path: 'members',
               },
               
               // options: {
@@ -432,11 +435,14 @@ router.get('/users/search', auth.required, function(req, res, next) {
                 res.json({
                   name:user.pack.name,
                   dp:user.pack.dp,
-                  alpha:user.pack.alpha.name || user.pack.alpha.username,
+                  // alpha:user.pack.alpha.name || user.pack.alpha.username,
+                  alpha:user.pack.alpha,
                   influence:user.pack.influence,
                   members:user.pack.members,
+                  
                   pack_id:user.pack.id,
-                  membercount:user.pack.members.length
+                  membercount:user.pack.members.length,
+                  user_id:user.id
                 });
               });
           
@@ -454,9 +460,9 @@ router.get('/users/search', auth.required, function(req, res, next) {
               return user.populate({
                 path: 'party',
                 populate: {
-                  // path: 'members',
+                  path: 'members',
                   
-                  path: 'alpha'
+                  // path: 'alpha'
                 },
                 
                 // options: {
@@ -469,11 +475,13 @@ router.get('/users/search', auth.required, function(req, res, next) {
                   res.json({
                     name:user.party.name,
                     dp:user.party.dp,
-                    alpha:user.party.alpha.name || user.party.alpha.username,
+                    // alpha:user.party.alpha.name || user.party.alpha.username,
+                    alpha:user.party.alpha,
                     influence:user.party.influence,
                     members:user.party.members,
                     pack_id:user.party.id,
-                    membercount:user.party.membercount
+                    membercount:user.party.membercount,
+                    user_id:user.id
                   });
                 });
             
@@ -527,16 +535,17 @@ router.get('/users/search', auth.required, function(req, res, next) {
                   if(pack.members.length>=12){
                     return res.sendStatus(300);
                   }
-                  var member = {
-                    name:user.name||user.username,
-                    photo:user.image,
-                    user:user
-                  }
-                  console.log(member);
+                  // var member = {
+                  //   name:user.name||user.username,
+                  //   photo:user.image,
+                  //   user:user
+                  // }
+                  // console.log(member);
                   user.pack = mongoose.Types.ObjectId(req.body.p_id);
-                  
+                  user.packDesignation = "Member";
+                  user.notifications.pull(req.body.id);
                   return user.save().then(function(){
-                    pack.members.push(member);
+                    pack.members.push(user);
                     return pack.save().then(function(pack) {
                       res.sendStatus(200);
                     });
@@ -552,16 +561,17 @@ router.get('/users/search', auth.required, function(req, res, next) {
               else{
                 
                 Party.findById(req.body.p_id).then(function(party){
-                  var member = {
-                    name:user.name||user.username,
-                    photo:user.image,
-                    user:user
-                  }
-                  console.log(member);
+                  // var member = {
+                  //   name:user.name||user.username,
+                  //   photo:user.image,
+                  //   user:user
+                  // }
+                  // console.log(member);
                   user.party = mongoose.Types.ObjectId(req.body.p_id);
-                  
+                  user.partyDesignation = "Member";
+                  user.notifications.pull(req.body.id);
                   return user.save().then(function(){
-                    party.members.push(member);
+                    party.members.push(user);
                     party.membercount++;
                     return party.save().then(function(party) {
                       res.sendStatus(200);
@@ -622,6 +632,148 @@ router.get('/users/search', auth.required, function(req, res, next) {
               }).catch(next);
             });
 
+            router.post('/users/remove', auth.required, function(req, res, next) {
+              console.log(req.body);
+              User.findById(req.body.id).then(function(user){
+                if (!user) { 
+                  return res.sendStatus(401);
+                }
+                
+                var type = req.body.type;
+                
+                if(type=="pack"){
+                  console.log(user.pack)
+                  Pack.findById(user.pack).then(function(pack){
+
+                    if(!pack){ return res.sendStatus(200); }
+                    
+                    user.pack = undefined;
+                    user.packDesignation = undefined;
+                    return user.save().then(function(){
+                      pack.members.pull(user);
+                      return pack.save().then(function(pack) {
+                        res.sendStatus(200);
+                      });
+                    });
+                  });
+                  
+                }
+                else{
+                  Party.findById(user.party).then(function(party){
+                    if(!party){ return res.sendStatus(200); }
+                    user.party = undefined;
+                    user.partyDesignation = undefined;
+                    return user.save().then(function(){
+                      party.members.pull(user);
+                      party.membercount--;
+                      return party.save().then(function(party) {
+                        res.sendStatus(200);
+                      });
+                    });
+                  });
+                    
+                }
+                
+                }).catch(next);
+              });
+
+              router.post('/users/promote', auth.required, function(req, res, next) {
+                console.log(req.body);
+                User.findById(req.body.id).then(function(user){
+                  if (!user) { 
+                    return res.sendStatus(401);
+                  }
+                  
+                  var type = req.body.type;
+                  
+                  if(type=="pack"){
+                    
+                      if(typeof user.pack == "undefined"){
+                        return res.sendStatus(401);
+                      }
+                      if(user.packDesignation=="Member"){
+                        user.packDesignation = "Beta"
+                      }
+                      else{
+                        return res.sendStatus(401);
+                      }
+                      
+                      return user.save().then(function(){
+                        return res.sendStatus(200);
+                        
+                      });
+                   
+                    
+                  }
+                  else{
+                    if(typeof user.party == "undefined"){
+                      return res.sendStatus(401);
+                    }
+                    if(user.partyDesignation=="Member"){
+                      user.partyDesignation = "Vice-President"
+                    }
+                    else{
+                      return res.sendStatus(401);
+                    }
+                    
+                    return user.save().then(function(){
+                      return res.sendStatus(200);
+                      
+                    });
+                      
+                  }
+                  
+                  }).catch(next);
+                });
+
+                router.post('/users/demote', auth.required, function(req, res, next) {
+                  console.log(req.body);
+                  User.findById(req.body.id).then(function(user){
+                    if (!user) { 
+                      return res.sendStatus(401);
+                    }
+                    
+                    var type = req.body.type;
+                    
+                    if(type=="pack"){
+                    
+                      if(typeof user.pack == "undefined"){
+                        return res.sendStatus(401);
+                      }
+                      if(user.packDesignation=="Beta"){
+                        user.packDesignation = "Member"
+                      }
+                      else{
+                        return res.sendStatus(401);
+                      }
+                      
+                      return user.save().then(function(){
+                        return res.sendStatus(200);
+                        
+                      });
+                   
+                    
+                  }
+                  else{
+                    if(typeof user.party == "undefined"){
+                      return res.sendStatus(401);
+                    }
+                    if(user.partyDesignation=="Vice-President"){
+                      user.partyDesignation = "Member"
+                    }
+                    else{
+                      return res.sendStatus(401);
+                    }
+                    
+                    return user.save().then(function(){
+                      return res.sendStatus(200);
+                      
+                    });
+                      
+                  }
+                    
+                    }).catch(next);
+                  });
 
 
 
@@ -638,12 +790,14 @@ router.get('/users/search', auth.required, function(req, res, next) {
 
 
 
-            router.get('users/getalpharanking',  function(req, res, next) {
+
+            router.get('/users/getalpharanking',  function(req, res, next) {
   
               Promise.all([
                 User.find()
-                  .limit(10)
+                  .limit(20)
                   .populate()
+                  .sort({ 'influence': 'desc' })
                   .exec(),
               ]).then(function(results){
                 var feeds = results[0];
@@ -661,9 +815,10 @@ router.get('/users/search', auth.required, function(req, res, next) {
               router.get('/users/getpackranking', function(req, res, next) {
   
                 Promise.all([
-                  User.find()
-                    .limit(10)
+                  Pack.find()
+                    .limit(20)
                     .populate()
+                    .sort({ 'influence': 'desc' })
                     .exec(),
                 ]).then(function(results){
                   var feeds = results[0];
@@ -671,12 +826,92 @@ router.get('/users/search', auth.required, function(req, res, next) {
                   console.log(results);
                   return res.json({
                     // profiles:feeds
-                    profiles: feeds.map(function(user){
-                      return user.toProfileJSONFor(user);
+                    packfeed: feeds.map(function(user){
+                      return {name:user.name,
+                        dp:user.dp,
+                        influence:user.influence}
                     })
                   })
                 });
                 });
+
+
+
+
+
+
+                router.get('/users/getcommitments', auth.required, function(req, res, next) {
+  
+                  User.findById(req.payload.id).then(function(user){
+                    if (!user) { 
+                      return res.sendStatus(401); 
+                    }
+                    
+                      return user.populate(
+                        {
+                          path: 'commitments'
+                          
+                        })
+                        .execPopulate().then(function(user) {
+                          
+                        return res.json({commitments: user.commitments.map(function(commitment){
+                          console.log(commitment)
+                          
+                          return commitment.toJSONFor(commitment);
+                       
+                        })
+      
+                          });
+                        });
+                      }).catch(next);
+                    });
+                    router.get('/users/viewcommitments', auth.required, function(req, res, next) {
+  
+                      User.findById(req.query.id).then(function(user){
+                        if (!user) { 
+                          return res.sendStatus(401); 
+                        }
+                        
+                          return user.populate(
+                            {
+                              path: 'commitments'
+                              
+                            })
+                            .execPopulate().then(function(user) {
+                              
+                            return res.json({commitments: user.commitments.map(function(commitment){
+                              console.log(commitment)
+                              
+                              return commitment.toJSONFor(commitment);
+                           
+                            })
+          
+                              });
+                            });
+                          }).catch(next);
+                        });
+
+                    router.post('/users/addcommitment', auth.required, function(req, res, next) {
+                      User.findById(req.payload.id).then(function(user){
+                        if(!user){ return res.sendStatus(401); }
+                        
+                      
+                          var commitment = new Commitment();
+                          commitment.body = req.body.commitment;
+                          commitment.author = user;
+                          
+                          return commitment.save().then(function(){
+                            user.commitments.push(commitment);
+                            
+                            return user.save().then(function(user) {
+                              res.sendStatus(200);
+                            });
+                          
+                        });
+                      
+                      
+                      }).catch(next);
+                    });
 
 
 
