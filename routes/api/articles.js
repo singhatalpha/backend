@@ -559,7 +559,7 @@ router.post('/dislike', auth.required, function(req, res, next) {
       });
     }
     else if (type=="anony"){
-      Comment.findOne({ _id: articleId },function(err, response) {
+      AnonymousComment.findOne({ _id: articleId },function(err, response) {
         if (err) {
         return res.sendStatus(400);
        } else {
