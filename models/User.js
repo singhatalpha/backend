@@ -159,14 +159,14 @@ UserSchema.methods.toProfileJSONFor = function(user){
 UserSchema.methods.feedprofile = function(user){
   return {
     user: this.name || this.username,
-    photo: this.image || 'https://static.productionready.io/images/smiley-cyrus.jpg'
+    photo: this.image || ''
   
   };
 };
 UserSchema.methods.searchprofile = function(user){
   return {
     user: this.name || this.username,
-    photo: this.image || 'https://static.productionready.io/images/smiley-cyrus.jpg',
+    photo: this.image || '',
     influence:this.influence
   
   };
