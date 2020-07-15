@@ -202,7 +202,7 @@ router.post('/users/login/google', function(req, res, next){
 
 router.post('/users/register', function(req, res, next){
   var user = new User();
-  console.log(req)
+  console.log(req.body);
   user.username = req.body.username;
   user.email = req.body.email;
 
