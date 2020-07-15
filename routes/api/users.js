@@ -206,13 +206,13 @@ router.post('/users/register', function(req, res, next){
   user.username = req.body.username;
   user.email = req.body.email;
 
-  user.password = req.body.password1;
-  user.confirmpassword = req.body.password2;
-  if(user.password1!==user.password2){
+  var password = req.body.password1;
+  var confirmpassword = req.body.password2;
+  if(password!=confirmpassword){
     return res.status(422).json({errors: {password: "mismatch!"}});
   }
 
-  user.setPassword(req.body.password);
+  user.setPassword(req.body.password1);
 
   user.save().then(function(){
     return res.json({user: user.toAuthJSON()});
