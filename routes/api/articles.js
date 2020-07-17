@@ -225,7 +225,7 @@ router.get('/feed',auth.required, function(req, res, next) {
         console.log(user);
         Promise.all([
           Post.find({author: user._id})
-            .populate()
+            .populate('author')
             .exec(),
         ]).then(function(results){
           var feeds = results[0];
