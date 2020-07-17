@@ -166,7 +166,7 @@ router.get('/feed',auth.required, function(req, res, next) {
           }
         }
       })
-        .limit(20)
+        .limit(100)
         .populate('author')
         .exec(),
     ]).then(function(results){
@@ -268,7 +268,7 @@ router.get('/feed',auth.required, function(req, res, next) {
             }
           }
         })
-          .limit(20)
+          .limit(100)
           .populate()
           .exec(),
       ]).then(function(results){
