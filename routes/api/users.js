@@ -297,13 +297,13 @@ router.get('/users/search', auth.required, function(req, res, next) {
       return res.sendStatus(401); 
     }
     Promise.all([
-      User.find(
-        // $or: [
-        //   { name: regexp },
-        //   { username: regexp},
-        // ]
-        {name:regexp}
-        )
+  User.find({
+        $or: [
+          { name: regexp },
+          { username: regexp}
+        ],
+        // {name:regexp}
+      })
         .limit(10)
         .populate()
         .exec(),
