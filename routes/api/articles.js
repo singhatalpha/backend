@@ -196,7 +196,7 @@ router.get('/feed',auth.required, function(req, res, next) {
       Promise.all([
         Post.find({})
           .limit(100)
-          .sort({"likes":1})
+          .sort({"likes":-1})
           .populate('author')
           .exec(),
       ]).then(function(results){
