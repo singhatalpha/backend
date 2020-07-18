@@ -13,7 +13,7 @@ var AnonymousPostSchema = new mongoose.Schema(
     //   ref: 'GridFs'
     // }
     // ],
-    image:[String],
+    // image:[String],
     // imagePublicId: String,
     author: {
       type: mongoose.Schema.Types.ObjectId,
@@ -61,7 +61,7 @@ AnonymousPostSchema.index({ location: "2dsphere" });
 AnonymousPostSchema.methods.toJSONFor = function(user){
   return {
     title: this.title,
-    media: this.image,
+    // media: this.image,
     likes:this.likes,
     comments:this.commentscount,
     postid:this._id,

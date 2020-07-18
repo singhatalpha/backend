@@ -372,22 +372,22 @@ router.post('/addpost', upload.any('image'), auth.required,function(req, res, ne
   }).catch(next);
 });
 
-router.post('/addanonymouspost', upload.any('image'), auth.required,function(req, res, next) {
+router.post('/addanonymouspost', auth.required,function(req, res, next) {
   
   
   User.findById(req.payload.id).then(function(user){
     if (!user) { return res.sendStatus(401); }
     
     var post = new AnonymousPost(req.body);
-    post.image = req.files.map(a => a.filename);
+    // post.image = req.files.map(a => a.filename);
     post.location = {
       type: "Point",
       coordinates: [parseFloat(req.body.longitude),parseFloat(req.body.latitude)]
      }
     
     post.author = user;
-    console.log(post.image);
-    console.log(req.files)
+    // console.log(post.image);
+    // console.log(req.files)
 
     return post.save().then(function(){
       return res.sendStatus(200);
