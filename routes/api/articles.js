@@ -186,6 +186,36 @@ router.get('/feed',auth.required, function(req, res, next) {
   });
 
 
+  router.get('/topfeed',auth.required, function(req, res, next) {
+ 
+    User.findById(req.payload.id).then(function(user){
+      if (!user) { 
+        return res.sendStatus(401); 
+      }
+  
+      Promise.all([
+        Post.find()
+          .limit(100)
+          .sort("likes")
+          .populate('author')
+          .exec(),
+      ]).then(function(results){
+        console.log(results);
+        var feeds = results[0];
+        // var articlesCount = results[1];
+        console.log(results);
+        return res.json({
+          feeds: feeds.map(function(post){
+            return post.toJSONFor(user);
+          }),
+          status:'300'
+        // return res.json({feeds:feeds,status:'300'})
+        })
+      });
+      }).catch(next);
+    });
+
+
 
   router.get('/feedgrid',auth.required, function(req, res, next) {
     
@@ -285,6 +315,36 @@ router.get('/feed',auth.required, function(req, res, next) {
       });
       }).catch(next);
     });
+
+
+
+    router.get('/topanonymousfeed',auth.required, function(req, res, next) {
+  
+      User.findById(req.payload.id).then(function(user){
+        if (!user) { 
+          return res.sendStatus(401); 
+        }
+    
+        Promise.all([
+          AnonymousPost.find()
+            .limit(100)
+            .sort("likes")
+            .populate()
+            .exec(),
+        ]).then(function(results){
+          var feeds = results[0];
+          // var articlesCount = results[1];
+          console.log(results);
+          return res.json({
+            feeds: feeds.map(function(AnonymousPost){
+              return AnonymousPost.toJSONFor(user);
+            }),
+            status:'300'
+          
+          })
+        });
+        }).catch(next);
+      });
 
 
 
