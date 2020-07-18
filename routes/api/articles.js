@@ -374,7 +374,7 @@ router.post('/addpost', upload.any('image'), auth.required,function(req, res, ne
 
 router.post('/addanonymouspost', auth.required,function(req, res, next) {
   
-  
+  console.log(req.body);
   User.findById(req.payload.id).then(function(user){
     if (!user) { return res.sendStatus(401); }
     
@@ -386,8 +386,7 @@ router.post('/addanonymouspost', auth.required,function(req, res, next) {
      }
     
     post.author = user;
-    // console.log(post.image);
-    // console.log(req.files)
+    
 
     return post.save().then(function(){
       return res.sendStatus(200);
