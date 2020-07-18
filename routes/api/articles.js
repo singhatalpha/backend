@@ -326,9 +326,9 @@ router.get('/feed',auth.required, function(req, res, next) {
         }
     
         Promise.all([
-          AnonymousPost.find()
+          AnonymousPost.find({})
             .limit(100)
-            .sort("likes")
+            .sort({"likes":-1})
             .populate()
             .exec(),
         ]).then(function(results){
