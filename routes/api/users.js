@@ -322,7 +322,7 @@ router.get('/users/search', auth.required, function(req, res, next) {
   });
 
   router.get('/users/checkpack', auth.required, function(req, res, next) {
-  
+    
     User.findById(req.payload.id).then(function(user){
       if (!user) { 
         return res.sendStatus(401); 
@@ -337,6 +337,25 @@ router.get('/users/search', auth.required, function(req, res, next) {
 
       }).catch(next);
     });
+
+    router.get('/users/viewcheckpack', auth.required, function(req, res, next) {
+      console.log(req.query.id);
+      User.findById(req.query.id).then(function(user){
+        if (!user) { 
+          return res.sendStatus(401); 
+        }
+        if(typeof user.pack=='undefined'){
+          console.log("Send 400")
+          return res.sendStatus(400);
+        }
+        else{
+          return res.sendStatus(200);
+        }
+  
+        }).catch(next);
+      });
+
+
     router.get('/users/checkparty', auth.required, function(req, res, next) {
   
       User.findById(req.payload.id).then(function(user){
@@ -352,6 +371,22 @@ router.get('/users/search', auth.required, function(req, res, next) {
   
         }).catch(next);
       });
+
+      router.get('/users/viewcheckparty', auth.required, function(req, res, next) {
+  
+        User.findById(req.query.id).then(function(user){
+          if (!user) { 
+            return res.sendStatus(401); 
+          }
+          if(typeof user.party=='undefined'){
+            return res.sendStatus(400);
+          }
+          else{
+            return res.sendStatus(200);
+          }
+    
+          }).catch(next);
+        });
 
     router.post('/users/createpack', upload.any('photo'),auth.required, function(req, res, next) {
   
@@ -450,6 +485,42 @@ router.get('/users/search', auth.required, function(req, res, next) {
           }).catch(next);
         });
 
+        router.get('/users/viewgetpack', auth.required, function(req, res, next) {
+  
+          User.findById(req.query.id).then(function(user){
+            if (!user) { 
+              return res.sendStatus(401); 
+            }
+            
+              return user.populate({
+                path: 'pack',
+                populate: {
+                  path: 'members',
+                },
+                
+                // options: {
+                //   sort: {
+                //     influence: 'desc'
+                //   }
+                // }
+              }).execPopulate().then(function(user) {
+                  console.log(user.pack.members[0]);
+                  res.json({
+                    name:user.pack.name,
+                    dp:user.pack.dp,
+                    // alpha:user.pack.alpha.name || user.pack.alpha.username,
+                    alpha:user.pack.alpha,
+                    influence:user.pack.influence,
+                    members:user.pack.members,
+                    
+                    pack_id:user.pack.id,
+                    membercount:user.pack.members.length,
+                    user_id:user.id
+                  });
+                });
+            }).catch(next);
+          });
+
         router.get('/users/getparty', auth.required, function(req, res, next) {
   
           User.findById(req.payload.id).then(function(user){
@@ -488,6 +559,45 @@ router.get('/users/search', auth.required, function(req, res, next) {
       
             }).catch(next);
           });
+
+          router.get('/users/viewgetparty', auth.required, function(req, res, next) {
+  
+            User.findById(req.query.id).then(function(user){
+              if (!user) { 
+                return res.sendStatus(401); 
+              }
+              
+                return user.populate({
+                  path: 'party',
+                  populate: {
+                    path: 'members',
+                    
+                    // path: 'alpha'
+                  },
+                  
+                  // options: {
+                  //   sort: {
+                  //     influence: 'desc'
+                  //   }
+                  // }
+                }).execPopulate().then(function(user) {
+                    console.log(user.party.members[0]);
+                    res.json({
+                      name:user.party.name,
+                      dp:user.party.dp,
+                      // alpha:user.party.alpha.name || user.party.alpha.username,
+                      alpha:user.party.alpha,
+                      influence:user.party.influence,
+                      members:user.party.members,
+                      pack_id:user.party.id,
+                      membercount:user.party.membercount,
+                      user_id:user.id
+                    });
+                  });
+              
+        
+              }).catch(next);
+            });
 
         router.post('/users/send', auth.required, function(req, res, next) {
   
