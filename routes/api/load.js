@@ -17,7 +17,7 @@ conn.once('open', () => {
 router.get('/:filename', (req, res) => {
     console.log(req.params);
     console.log()
-    gfs.files.findOne({ filename: "http://alphanetwork.herokuapp.com/api/load/"+req.params.filename }, (err, file) => {
+    gfs.files.findOne({ filename: "https://134.209.148.223/api/load/"+req.params.filename }, (err, file) => {
       // http://192.168.43.99:3000/api/load/
       // Check if file
       if (!file || file.length === 0) {
