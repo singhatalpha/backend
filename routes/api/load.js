@@ -1,7 +1,7 @@
 var router = require('express').Router();
 var mongoose = require('mongoose');
 
-const mongoURI ="mongodb://alpha:12qwaszx-V@157.245.109.205:27017/test?retryWrites=true&w=majority";
+const mongoURI ="mongodb://alpha:12qwaszx-V@157.245.109.205:27017/admin?authSource=admin&readPreference=primary&ssl=false&retryWrites=true&w=majority";
 
 const conn = mongoose.createConnection(mongoURI);
 let gfs
