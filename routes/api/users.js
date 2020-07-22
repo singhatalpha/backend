@@ -12,7 +12,7 @@ var crypto = require('crypto');
 const GridFsStorage = require("multer-gridfs-storage");
 const { sort } = require('methods');
 const storage = new GridFsStorage({
-  url: 'mongodb+srv://test:12qwaszx@cluster0-l90om.mongodb.net/test?retryWrites=true&w=majority',
+  url: 'mongodb://alpha:12qwaszx-V@157.245.109.205:27017/admin?retryWrites=true&w=majority',
   file: (req, file) => {
     return new Promise((resolve, reject) => {
       crypto.randomBytes(16, (err, buf) => {
