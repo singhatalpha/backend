@@ -21,7 +21,7 @@ const storage = new GridFsStorage({
           return reject(err)
         }
         // const url = file.path;
-        const filename = "https://128.199.16.37/api/load/"+token
+        const filename = "https://159.65.157.28/api/load/"+token
         const name = file.originalname
         const fileInfo = {
           // url : url,
