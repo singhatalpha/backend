@@ -31,9 +31,9 @@ if (!isProduction) {
 }
 
 if(isProduction){
-  mongoose.connect('mongodb+srv://test:12qwaszx@cluster0-l90om.mongodb.net/test?retryWrites=true&w=majority');
+  mongoose.connect('mongodb://alpha:12qwaszx-V@157.245.109.205:27017/admin?retryWrites=true&w=majority');
 } else {
-  mongoose.connect('mongodb+srv://test:12qwaszx@cluster0-l90om.mongodb.net/test?retryWrites=true&w=majority');
+  mongoose.connect('mongodb://alpha:12qwaszx-V@157.245.109.205:27017/admin?retryWrites=true&w=majority');
   mongoose.set('debug', true);
 }
 
