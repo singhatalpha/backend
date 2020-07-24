@@ -166,7 +166,7 @@ router.get('/feed',auth.required, function(req, res, next) {
           }
         }
       })
-        .limit(100)
+        .limit(150)
         .populate('author')
         .exec(),
     ]).then(function(results){
@@ -195,7 +195,7 @@ router.get('/feed',auth.required, function(req, res, next) {
   
       Promise.all([
         Post.find({})
-          .limit(100)
+          .limit(150)
           .sort({"likes":-1})
           .populate('author')
           .exec(),
