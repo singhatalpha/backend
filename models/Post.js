@@ -14,6 +14,7 @@ var PostSchema = new mongoose.Schema(
     // }
     // ],
     image:[String],
+    video: String,
     // imagePublicId: String,
     author: {
       type: mongoose.Schema.Types.ObjectId,
@@ -63,6 +64,7 @@ PostSchema.methods.toJSONFor = function(user){
   return {
     title: this.title,
     media: this.image,
+    video: this.video||"",
     likes:this.likes,
     comments:this.commentscount,
     time: this.createdAt,
