@@ -372,6 +372,26 @@ router.post('/addpost', upload.any('image'), auth.required,function(req, res, ne
   }).catch(next);
 });
 
+router.post('/addvideopost', upload.single('video'), auth.required,function(req, res, next) {
+  
+  User.findById(req.payload.id).then(function(user){
+    if (!user) { return res.sendStatus(401); }
+    
+    var post = new Post(req.body);
+    post.video = req.file.filename;
+    post.author = user;
+    post.location = {
+      type: "Point",
+      coordinates: [parseFloat(req.body.longitude),parseFloat(req.body.latitude)]
+     }
+    console.log(post.video);
+  
+    return post.save().then(function(){
+      return res.sendStatus(200);
+    });
+  }).catch(next);
+});
+
 router.post('/addanonymouspost', auth.required,function(req, res, next) {
   
   console.log(req.body);
