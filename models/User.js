@@ -140,6 +140,7 @@ UserSchema.methods.toProfileJSONFor = function(user){
   return {
     user_id:this.id,
     photo: this.image || '',
+    profession: this.profession||'',
     username: this.name || this.username,
     position:this.position || '',
     influence:this.influence,
