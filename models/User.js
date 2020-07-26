@@ -9,7 +9,13 @@ var UserSchema = new mongoose.Schema({
     id: String,
   },
   name:String,
+  
+  
   position:String,
+  confirmed: {type:Boolean, default:false},
+  profession: String,
+  
+  
   username: {type: String, lowercase: true, unique: true,
     //  required: [true, "can't be blank"], match: [/^[a-zA-Z0-9]+$/, 'is invalid'], 
      index: true},
