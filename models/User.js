@@ -12,7 +12,7 @@ var UserSchema = new mongoose.Schema({
   
   
   position:String,
-  confirmed: {type:Boolean, default:false},
+  verified: {type:Boolean, default:false},
   profession: String,
   
   
