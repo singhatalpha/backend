@@ -57,6 +57,9 @@ router.patch('/user', upload.any('photo'),auth.required, function(req, res, next
   User.findById(req.payload.id).then(function(user){
     if(!user){ return res.sendStatus(401); }
     
+    if(typeof user.profession=='undefined'){
+        user['profession'] = req.body.profession;
+    }
     
     // only update fields that were actually passed...
     if(typeof req.body.username!='undefined' && req.body.username!=''){
