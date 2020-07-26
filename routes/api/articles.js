@@ -185,6 +185,145 @@ router.get('/feed',auth.required, function(req, res, next) {
     }).catch(next);
   });
 
+router.get('/professionfeed',auth.required, function(req, res, next) {
+  
+
+    console.log(req.query);
+    var longitude = req.query.longitude;
+    var latitude = req.query.latitude;
+  
+    User.findById(req.payload.id).then(function(user){
+      if (!user) { 
+        return res.sendStatus(401);
+      }
+      // var query = {$and:[{firstName:{$regex: req.body.customerName, $options: 'i'}},{lastName:{$regex: req.body.customerName, $options: 'i'}}]}
+      Promise.all([
+        Post.find({$and:[{
+            location: {
+            $near: {
+            //  $maxDistance: 90*1000,
+             $geometry: {
+              type: "Point",
+              coordinates: [longitude, latitude]
+             }
+            }
+          }},
+          {profession:user.profession},
+        ]})
+          
+          .limit(150)
+          .populate('author')
+          .exec(),
+      ]).then(function(results){
+        console.log(results);
+        var feeds = results[0];
+        // var articlesCount = results[1];
+        console.log(results);
+        return res.json({
+          feeds: feeds.map(function(post){
+            return post.toJSONFor(user);
+          }),
+          status:'300'
+        // return res.json({feeds:feeds,status:'300'})
+        })
+      });
+      }).catch(next);
+    });
+
+    router.get('/verifiedfeed',auth.required, function(req, res, next) {
+  
+
+      console.log(req.query);
+      var longitude = req.query.longitude;
+      var latitude = req.query.latitude;
+    
+    
+      
+    
+    
+      User.findById(req.payload.id).then(function(user){
+        if (!user) { 
+          return res.sendStatus(401); 
+        }
+    
+        Promise.all([
+          Post.find({$and:[{
+            location: {
+            $near: {
+            //  $maxDistance: 90*1000,
+             $geometry: {
+              type: "Point",
+              coordinates: [longitude, latitude]
+             }
+            }
+          }},
+          {verified:true},
+        ]})
+            .limit(150)
+            .populate('author')
+            .exec(),
+        ]).then(function(results){
+          console.log(results);
+          var feeds = results[0];
+          // var articlesCount = results[1];
+          console.log(results);
+          return res.json({
+            feeds: feeds.map(function(post){
+              return post.toJSONFor(user);
+            }),
+            status:'300'
+          // return res.json({feeds:feeds,status:'300'})
+          })
+        });
+        }).catch(next);
+      });
+
+      router.get('/bothfeed',auth.required, function(req, res, next) {
+  
+
+        console.log(req.query);
+        var longitude = req.query.longitude;
+        var latitude = req.query.latitude;
+      
+    
+        User.findById(req.payload.id).then(function(user){
+          if (!user) { 
+            return res.sendStatus(401); 
+          }
+      
+          Promise.all([
+            Post.find({$and:[{
+              location: {
+              $near: {
+              //  $maxDistance: 90*1000,
+               $geometry: {
+                type: "Point",
+                coordinates: [longitude, latitude]
+               }
+              }
+            }},
+            {profession:user.profession},
+            {verified:true},
+          ]})
+              .limit(150)
+              .populate('author')
+              .exec(),
+          ]).then(function(results){
+            console.log(results);
+            var feeds = results[0];
+            // var articlesCount = results[1];
+            console.log(results);
+            return res.json({
+              feeds: feeds.map(function(post){
+                return post.toJSONFor(user);
+              }),
+              status:'300'
+            // return res.json({feeds:feeds,status:'300'})
+            })
+          });
+          }).catch(next);
+        });
+
 
   router.get('/topfeed',auth.required, function(req, res, next) {
  
