@@ -16,6 +16,7 @@ var PostSchema = new mongoose.Schema(
     image:[String],
     video: String,
     verified: {type:Boolean, default:false},
+    profession: String,
     // imagePublicId: String,
     author: {
       type: mongoose.Schema.Types.ObjectId,
