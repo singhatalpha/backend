@@ -132,7 +132,7 @@ UserSchema.methods.toAuthJSON = function(){
     token: this.generateJWT(),
     bio: this.bio,
     image: this.image,
-    profession:this.profession
+    profession:this.profession||""
   };
 };
 
